@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('poll_option_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('ip_address')->nullable();
 
             $table->timestamps();
