@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\VoteCasted;
 use App\Models\Poll;
 use App\Models\PollVote;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class PollController extends Controller
         $ip = $request->ip();
 
         $vote = $poll->getUsersVote($userId, $ip);
-        
+
         if ($vote) {
             if (!$vote->user_id && $userId) {
                 $vote->update([
@@ -35,6 +36,8 @@ class PollController extends Controller
             'user_id' => $userId,
             'ip_address' => $ip,
         ]);
+
+        VoteCasted::dispatch($poll);
 
         return response()->json(['message' => 'Vote submitted successfully.']);
     }

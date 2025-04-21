@@ -6,7 +6,7 @@
         <flux:radio.group wire:model="selectedOption" label="Select your poll" :disabled="$this->getUsersVote">
             @if ($poll?->pollOptions)
                 @foreach ($poll->pollOptions as $pollOption)
-                    <flux:radio :value="$pollOption->id" :label="$pollOption->option" class="mt-3" />
+                    <flux:radio :value="$pollOption->id" :label="$pollOption->option . ' ('.$pollOption->votes?->count().')'" class="mt-3" />
                 @endforeach
             @endif
         </flux:radio.group>

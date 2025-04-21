@@ -14,9 +14,16 @@ class ViewPoll extends Component
 
     public $selectedOption;
 
+    public function getListeners()
+    {
+        return [
+            "echo:vote-casted.{$this->poll->id},VoteCasted" => '$refresh',
+        ];
+    }
+
     public function mount()
     {
-        $this->poll = Poll::with(['pollOptions', 'pollVotes'])->find($this->poll);
+        $this->poll = Poll::with(['pollOptions.votes', 'pollVotes'])->find($this->poll);
         $this->selectedOption = $this->getUsersVote?->id;
     }
 

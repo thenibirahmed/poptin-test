@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Poll;
+use App\Models\PollVote;
 use Illuminate\Database\Eloquent\Model;
 
 class PollOption extends Model
@@ -15,5 +16,10 @@ class PollOption extends Model
     public function poll()
     {
         return $this->belongsTo(Poll::class);
+    }
+
+    public function votes()
+    {
+        return $this->hasMany(PollVote::class);
     }
 }
