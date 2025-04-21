@@ -10,7 +10,7 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::view('/poll/{poll}', 'poll')->name('poll');
+Route::view('/poll/{poll}', 'poll')->name('poll.view');
 
 Route::view('dashboard', 'dashboard')->middleware(['auth', 'verified'])->name('dashboard');
 Route::view('poll/add', 'add-poll')->middleware(['auth', 'verified'])->name('polls.add');
