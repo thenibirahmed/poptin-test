@@ -105,4 +105,20 @@ class PollVotingTest extends TestCase
 
         $this->assertEquals(1, PollVote::count());
     }
+
+    public function test_two_guests_with_different_ips_can_vote()
+    {
+        $poll = Poll::factory()->has(PollOption::factory()->count(2))->create();
+        $option = $poll->pollOptions()->first();
+
+        $this->postJson("/api/polls/{$poll->id}/vote", [
+            'poll_option_id' => $option->id,
+        ], ['REMOTE_ADDR' => '111.111.111.1'])->assertStatus(200);
+
+        $this->postJson("/api/polls/{$poll->id}/vote", [
+            'poll_option_id' => $option->id,
+        ], ['REMOTE_ADDR' => '222.222.222.2'])->assertStatus(200);
+
+        $this->assertEquals(2, PollVote::count());
+    }
 }
