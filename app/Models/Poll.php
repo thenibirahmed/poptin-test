@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use App\Models\PollOption;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Poll extends Model
 {
+    use HasFactory;
+    
     protected $fillable = [
         'name',
         'question',

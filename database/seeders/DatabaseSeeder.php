@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Poll;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -19,5 +20,19 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+        
+        User::factory()->create([
+            'name' => 'Gal',
+            'email' => 'gal@gal.com',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Tomer',
+            'email' => 'tomer@tomer.com',
+        ]);
+
+        Poll::factory(10)
+            ->hasPollOptions(3)
+            ->create();
     }
 }
