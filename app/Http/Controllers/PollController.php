@@ -18,13 +18,8 @@ class PollController extends Controller
         $userId = auth('sanctum')->id();
         $ip = $request->ip();
 
-        $vote = PollVote::whereHas('pollOption', function ($q) use ($poll) {
-                $q->where('poll_id', $poll->id);
-            })
-            ->when($userId, fn ($q) => $q->where('user_id', $userId))
-            ->when(!$userId, fn ($q) => $q->where('ip_address', $ip))
-            ->first();
-
+        $vote = $poll->getUsersVote($userId, $ip);
+        
         if ($vote) {
             if (!$vote->user_id && $userId) {
                 $vote->update([

@@ -3,7 +3,7 @@
         {{ $poll?->question }}
     </h1>
     <div class="mt-6">
-        <flux:radio.group wire:model="selectedOption" label="Select your poll">
+        <flux:radio.group wire:model="selectedOption" label="Select your poll" :disabled="$this->getUsersVote">
             @if ($poll?->pollOptions)
                 @foreach ($poll->pollOptions as $pollOption)
                     <flux:radio :value="$pollOption->id" :label="$pollOption->option" class="mt-3" />
@@ -12,8 +12,14 @@
         </flux:radio.group>
     </div>
     <div class="mt-10">
-        <flux:button wire:click.prevent="vote" size="sm">
-            Submit Vote
-        </flux:button>
+        @if ($this->getUsersVote)
+            <div class="text-sm text-gray-500">
+                You have voted for option: <span class="font-bold">{{ $this->getUsersVote?->pollOption?->option }}</span>
+            </div>
+        @else
+            <flux:button wire:click.prevent="vote" size="sm">
+                Submit Vote
+            </flux:button>
+        @endif
     </div>
 </div>

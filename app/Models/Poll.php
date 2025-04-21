@@ -33,4 +33,15 @@ class Poll extends Model
             'id'
         );
     }
+
+    public function getUsersVote($userId = null, $ip = null)
+    {
+        $userId = $userId ?: auth()->id();
+        $ip = $ip ?: request()->ip();
+
+        return $this->pollVotes()
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
+            ->when(!$userId && $ip, fn ($q) => $q->where('ip_address', $ip))
+            ->first();
+    }
 }
