@@ -30,10 +30,8 @@ class ViewPoll extends Component
     #[Computed(persist: true)]
     public function getUsersVote()
     {
-        $userId = Auth::id();
         $ip = request()->ip();
-
-        return $this->poll->getUsersVote($userId, $ip);
+        return $this->poll->getUsersVote($ip);
     }
 
     public function vote()

@@ -19,7 +19,7 @@ class PollController extends Controller
         $userId = auth('sanctum')->id();
         $ip = $request->ip();
 
-        $vote = $poll->getUsersVote($userId, $ip);
+        $vote = $poll->getUsersVote($ip);
 
         if ($vote) {
             if (!$vote->user_id && $userId) {

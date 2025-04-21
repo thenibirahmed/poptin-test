@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Poll extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'name',
         'question',
@@ -37,14 +37,12 @@ class Poll extends Model
         );
     }
 
-    public function getUsersVote($userId = null, $ip = null)
+    public function getUsersVote($ip = null)
     {
-        $userId = $userId ?: auth()->id();
         $ip = $ip ?: request()->ip();
-
+        
         return $this->pollVotes()
-            ->when($userId, fn ($q) => $q->where('user_id', $userId))
-            ->when(!$userId && $ip, fn ($q) => $q->where('ip_address', $ip))
+            ->when($ip, fn ($query) => $query->where('ip_address', $ip))
             ->first();
     }
 }
