@@ -41,9 +41,7 @@ class Poll extends Model
     {
         return $this->pollVotes()
             ->where(function ($query) use ($ip, $userId) {
-                if ($ip) {
-                    $query->where('ip_address', $ip);
-                }
+                $query->where('ip_address', $ip);
 
                 if ($userId) {
                     $query->orWhere('user_id', $userId);
