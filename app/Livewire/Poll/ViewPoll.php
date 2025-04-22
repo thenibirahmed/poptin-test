@@ -36,8 +36,8 @@ class ViewPoll extends Component
     public function getUsersVote()
     {
         $ip = request()->ip();
-        dd($ip);
-        return $this->poll->getUsersVote($ip);
+        $userId = Auth::id();
+        return $this->poll->getUsersVote($ip, $userId);
     }
 
     public function vote()
@@ -63,6 +63,7 @@ class ViewPoll extends Component
 
         $response = $http->post(url("/api/polls/{$this->poll->id}/vote"), [
             'poll_option_id' => $this->selectedOption,
+            'ip_address' => request()->ip(),
         ]);
         
         if ($response->successful()) {

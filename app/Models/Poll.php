@@ -37,12 +37,18 @@ class Poll extends Model
         );
     }
 
-    public function getUsersVote($ip = null)
+    public function getUsersVote($ip, $userId = null)
     {
-        $ip = $ip ?: request()->ip();
-        
         return $this->pollVotes()
-            ->when($ip, fn ($query) => $query->where('ip_address', $ip))
+            ->where(function ($query) use ($ip, $userId) {
+                if ($ip) {
+                    $query->where('ip_address', $ip);
+                }
+
+                if ($userId) {
+                    $query->orWhere('user_id', $userId);
+                }
+            })
             ->first();
     }
 }
