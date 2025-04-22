@@ -36,6 +36,7 @@ class ViewPoll extends Component
     public function getUsersVote()
     {
         $ip = request()->ip();
+        dd($ip);
         return $this->poll->getUsersVote($ip);
     }
 
