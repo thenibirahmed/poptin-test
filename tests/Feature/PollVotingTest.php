@@ -29,6 +29,7 @@ class PollVotingTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
+            'ip_address' => '1.1.1.1',
         ]);
 
         $response->assertStatus(200);
@@ -36,6 +37,7 @@ class PollVotingTest extends TestCase
         $this->assertDatabaseHas('poll_votes', [
             'poll_option_id' => $option->id,
             'user_id' => $user->id,
+            'ip_address' => '1.1.1.1',
         ]);
     }
 
@@ -47,10 +49,12 @@ class PollVotingTest extends TestCase
 
         $this->actingAs($user, 'sanctum')->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
+            'ip_address' => '2.2.2.2',
         ])->assertStatus(200);
 
         $this->actingAs($user, 'sanctum')->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
+            'ip_address' => '2.2.2.3',
         ])->assertStatus(403);
     }
 
@@ -61,11 +65,13 @@ class PollVotingTest extends TestCase
 
         $this->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
+            'ip_address' => '3.3.3.3',
         ])->assertStatus(200);
 
         $this->assertDatabaseHas('poll_votes', [
             'poll_option_id' => $option->id,
             'user_id' => null,
+            'ip_address' => '3.3.3.3',
         ]);
     }
 
@@ -76,10 +82,12 @@ class PollVotingTest extends TestCase
 
         $this->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
+            'ip_address' => '4.4.4.4',
         ])->assertStatus(200);
 
         $this->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
+            'ip_address' => '4.4.4.4',
         ])->assertStatus(403);
     }
 
@@ -90,17 +98,20 @@ class PollVotingTest extends TestCase
 
         $this->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
+            'ip_address' => '5.5.5.5',
         ])->assertStatus(200);
 
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
+            'ip_address' => '5.5.5.5',
         ])->assertStatus(403);
 
         $this->assertDatabaseHas('poll_votes', [
             'poll_option_id' => $option->id,
             'user_id' => $user->id,
+            'ip_address' => '5.5.5.5',
         ]);
 
         $this->assertEquals(1, PollVote::count());
@@ -113,11 +124,13 @@ class PollVotingTest extends TestCase
 
         $this->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
-        ], ['REMOTE_ADDR' => '111.111.111.1'])->assertStatus(200);
+            'ip_address' => '6.6.6.6',
+        ])->assertStatus(200);
 
         $this->postJson("/api/polls/{$poll->id}/vote", [
             'poll_option_id' => $option->id,
-        ], ['REMOTE_ADDR' => '222.222.222.2'])->assertStatus(200);
+            'ip_address' => '7.7.7.7',
+        ])->assertStatus(200);
 
         $this->assertEquals(2, PollVote::count());
     }

@@ -6,7 +6,6 @@ use App\Events\VoteCasted;
 use App\Models\Poll;
 use App\Models\PollVote;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class PollController extends Controller
 {
@@ -41,5 +40,4 @@ class PollController extends Controller
 
         return response()->json(['message' => 'Vote submitted successfully.']);
     }
-
 }
