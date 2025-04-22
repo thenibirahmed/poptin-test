@@ -18,7 +18,7 @@ class PollList extends Component
     public function render()
     {
         return view('livewire.poll.poll-list', [
-            'polls' => Poll::withCount('pollVotes')->paginate(15),
+            'polls' => Poll::withCount('pollVotes')->paginate(10),
         ]);
     }
 }

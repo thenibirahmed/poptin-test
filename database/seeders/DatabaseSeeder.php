@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'tomer@tomer.com',
         ]);
 
-        Poll::factory(10)
+        Poll::factory(15)
             ->hasPollOptions(3)
             ->create();
     }

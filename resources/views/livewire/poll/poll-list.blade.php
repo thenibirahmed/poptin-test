@@ -6,7 +6,7 @@
                 <th scope="col" class="px-3 text-white py-3.5 text-left text-sm font-semibold text-white-900">Question</th>
                 <th scope="col" class="px-3 text-white py-3.5 text-left text-sm font-semibold text-white-900">Votes</th>
                 <th scope="col" class="relative text-white py-3.5 pl-3 pr-4 sm:pr-6">
-                    <span class="sr-only">Edit</span>
+                    Actions
                 </th>
             </tr>
         </thead>
@@ -34,9 +34,9 @@
                             }
                         }"
                     >
-                        <a x-text="copied ? 'Copied ✅' : 'Copy Link'" @click.prevent="copy" href="#" class="text-white hover:underline"></a> |
-                        <a href="{{ route('poll.view', ['poll' => $poll->id]) }}" class="text-white hover:underline">View</a> |
-                        <a wire:click.prevent='deletePoll({{ $poll->id }})' wire:confirm='Are you sure you want to delete this poll?' href="#" class="text-red-500 hover:underline">Delete</a>
+                        <flux:button x-text="copied ? 'Copied ✅' : 'Copy Link'" @click.prevent="copy" href="#" size="xs" variant="primary">Copy Link</flux:button>
+                        <flux:button href="{{ route('poll.view', ['poll' => $poll->id]) }}" size="xs" variant="primary">View</flux:button>
+                        <flux:button wire:click.prevent='deletePoll({{ $poll->id }})' wire:confirm='Are you sure you want to delete this poll?' href="#" size="xs" variant="danger">Delete</flux:button>
                     </td>
                 </tr>
             @empty
@@ -46,4 +46,7 @@
             @endforelse
         </tbody>
     </table>
+    <div class="mt-4">
+        {{ $polls->links() }}
+    </div>
 </div>

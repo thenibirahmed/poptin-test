@@ -24,6 +24,11 @@ class ViewPoll extends Component
     public function mount()
     {
         $this->poll = Poll::with(['pollOptions.votes', 'pollVotes'])->find($this->poll);
+
+        if(!$this->poll) {
+            abort(404);
+        }
+
         $this->selectedOption = $this->getUsersVote?->id;
     }
 
@@ -65,7 +70,6 @@ class ViewPoll extends Component
             $this->addError('selectedOption', $response->json('message', 'An error occurred while submitting your vote.'));
         }
     }
-
 
     public function render()
     {
