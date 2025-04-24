@@ -8,7 +8,7 @@ use Livewire\Component;
 
 class AddPoll extends Component
 {
-    public $poll = Poll::CREATE_SKELETON;
+    public $poll;
 
     public $pollOptions = [
         'Option 1',
@@ -19,12 +19,22 @@ class AddPoll extends Component
         $this->pollOptions[] = '';
     }
 
+    public function mount()
+    {
+        if($this->poll) {
+            $this->poll = Poll::find($this->poll);
+            $this->pollOptions = $this->poll->pollOptions->pluck('option')->toArray();
+            $this->poll = $this->poll->only(['id', 'name', 'question']);
+        } else {
+            $this->poll = Poll::CREATE_SKELETON;
+        }
+    }
+
     public function removePollOption($index)
     {
         unset($this->pollOptions[$index]);
         $this->pollOptions = array_values($this->pollOptions);
     }
-
 
     public function savePoll()
     {
@@ -52,6 +62,11 @@ class AddPoll extends Component
 
         session()->flash('poll-added', 'Poll created successfully.');
         return redirect()->route('dashboard');
+    }
+
+    public function isEditinG()
+    {
+        return isset($this->poll['id']);
     }
 
     public function rules()

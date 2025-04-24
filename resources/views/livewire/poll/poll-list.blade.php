@@ -35,6 +35,7 @@
                         }"
                     >
                         <flux:button x-text="copied ? 'Copied ✅' : 'Copy Link'" @click.prevent="copy" href="#" size="xs" variant="primary">Copy Link</flux:button>
+                        <flux:button href="{{ route('poll.edit', ['poll' => $poll->id]) }}" wire:navigate size="xs" variant="primary">Edit</flux:button>
                         <flux:button href="{{ route('poll.view', ['poll' => $poll->id]) }}" size="xs" variant="primary">View</flux:button>
                         <flux:button wire:click.prevent='deletePoll({{ $poll->id }})' wire:confirm='Are you sure you want to delete this poll?' href="#" size="xs" variant="danger">Delete</flux:button>
                     </td>

@@ -14,6 +14,7 @@ Route::view('/poll/{poll}/view', 'poll')->name('poll.view');
 
 Route::view('dashboard', 'dashboard')->middleware(['auth', 'verified'])->name('dashboard');
 Route::view('poll/add', 'add-poll')->middleware(['auth', 'verified'])->name('polls.add');
+Route::view('/poll/{poll}/edit', 'edit-poll')->middleware(['auth', 'verified'])->name('poll.edit');
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
