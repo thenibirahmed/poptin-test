@@ -5,6 +5,7 @@ namespace App\Livewire\Poll;
 use App\Models\Poll;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Http;
 use Livewire\Attributes\Computed;
 
@@ -35,9 +36,8 @@ class ViewPoll extends Component
     #[Computed(persist: true)]
     public function getUsersVote()
     {
-        $ip = request()->ip();
         $userId = Auth::id();
-        return $this->poll->getUsersVote($ip, $userId);
+        return $this->poll->getUsersVote($userId);
     }
 
     public function vote()
@@ -67,7 +67,14 @@ class ViewPoll extends Component
         ]);
         
         if ($response->successful()) {
-            $this->dispatch('$refresh');
+            $cookieJar = $response->cookies();
+            
+            $cookie = collect($cookieJar->toArray())->firstWhere('Name', Poll::POLL_COOKIE_KEY);
+
+            if ($cookie && isset($cookie['Value'])) {
+                $cookieValue = urldecode($cookie['Value']);
+                Cookie::queue(Poll::POLL_COOKIE_KEY, $cookieValue, 60 * 24 * 30);
+            }
         } else {
             $this->addError('selectedOption', $response->json('message', 'An error occurred while submitting your vote.'));
         }

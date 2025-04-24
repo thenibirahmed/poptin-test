@@ -30,6 +30,7 @@ class AddPoll extends Component
     {
         $validatedPoll = $this->validate();
 
+        $validatedPoll['poll']['user_id'] = auth()->id();
         $poll = Poll::create($validatedPoll['poll']);
 
         $pollOptionToInsert = [];

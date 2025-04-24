@@ -16,28 +16,22 @@ class PollController extends Controller
         ]);
 
         $userId = auth('sanctum')->id();
-        $ip = $request->input('ip_address');
+        $cookieVotes = json_decode($request->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
 
-        $vote = $poll->getUsersVote($ip, $userId);
-
-        if ($vote) {
-            if (!$vote->user_id && $userId) {
-                $vote->update([
-                    'user_id' => $userId,
-                ]);
-            }
-
+        if (isset($cookieVotes[$poll->id])) {
+            VoteCasted::dispatch($poll);
             return response()->json(['message' => 'You have already voted.'], 403);
         }
 
         PollVote::create([
             'poll_option_id' => $request->poll_option_id,
             'user_id' => $userId,
-            'ip_address' => $ip,
         ]);
 
-        VoteCasted::dispatch($poll);
+        $cookieVotes[$poll->id] = $request->poll_option_id;
 
-        return response()->json(['message' => 'Vote submitted successfully.']);
+        VoteCasted::dispatch($poll);
+        return response()->json(['message' => 'Vote submitted successfully.'])
+            ->cookie(Poll::POLL_COOKIE_KEY, json_encode($cookieVotes), 60 * 24 * 30);
     }
 }

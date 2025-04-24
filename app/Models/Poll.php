@@ -3,8 +3,9 @@
 namespace App\Models;
 
 use App\Models\PollOption;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Poll extends Model
 {
@@ -19,6 +20,8 @@ class Poll extends Model
         'name' => '',
         'question' => '',
     ];
+
+    public const POLL_COOKIE_KEY = 'poll_votes';
 
     public function pollOptions()
     {
@@ -37,16 +40,19 @@ class Poll extends Model
         );
     }
 
-    public function getUsersVote($ip, $userId = null)
+    public function getUsersVote($userId = null)
     {
-        return $this->pollVotes()
-            ->where(function ($query) use ($ip, $userId) {
-                $query->where('ip_address', $ip);
+        $cookieVotes = json_decode(request()->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
+        
+        if (isset($cookieVotes[$this->id])) {
+            return $this->pollOptions()->find($cookieVotes[$this->id]);
+        }
 
-                if ($userId) {
-                    $query->orWhere('user_id', $userId);
-                }
-            })
-            ->first();
+        if ($userId) {
+            $vote = $this->pollVotes()->with('pollOption')->where('user_id', $userId)->first();
+            return $vote?->pollOption;
+        }
+
+        return null;
     }
 }

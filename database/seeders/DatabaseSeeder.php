@@ -21,18 +21,26 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
         
-        User::factory()->create([
+        $userOne = User::factory()->create([
             'name' => 'Gal',
             'email' => 'gal@gal.com',
         ]);
 
-        User::factory()->create([
+        $userTwo = User::factory()->create([
             'name' => 'Tomer',
             'email' => 'tomer@tomer.com',
         ]);
 
         Poll::factory(15)
             ->hasPollOptions(3)
-            ->create();
+            ->create([
+                'user_id' => $userOne->id,
+            ]);
+
+        Poll::factory(15)
+            ->hasPollOptions(3)
+            ->create([
+                'user_id' => $userTwo->id,
+            ]);
     }
 }
