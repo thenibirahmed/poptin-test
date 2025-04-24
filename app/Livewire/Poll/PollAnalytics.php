@@ -5,12 +5,20 @@ namespace App\Livewire\Poll;
 use App\Models\Poll;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Services\PollService;
 
 class PollAnalytics extends Component
 {
     use WithPagination;
 
     public $poll;
+
+    protected PollService $pollService;
+
+    public function boot(PollService $pollService)
+    {
+        $this->pollService = $pollService;
+    }
 
     public function mount($poll)
     {
@@ -23,20 +31,9 @@ class PollAnalytics extends Component
         }
     }
 
-    public function getPollWinners()
-    {
-        $maxVotes = $this->poll->pollOptions
-            ->map(fn ($option) => $option->votes->count())
-            ->max();
-
-        return $this->poll->pollOptions->filter(fn ($option) => $option->votes->count() === $maxVotes);
-    }
-
     public function getWinnerNames()
     {
-        return $this->getPollWinners()
-            ->pluck('option') 
-            ->implode(', ');
+        return $this->pollService->getFormattedWinners($this->poll);
     }
 
     public function render()

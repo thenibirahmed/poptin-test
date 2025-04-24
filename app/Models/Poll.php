@@ -14,6 +14,8 @@ class Poll extends Model
     protected $fillable = [
         'name',
         'question',
+        'user_id',
+        'uuid'
     ];
 
     public const CREATE_SKELETON = [
@@ -43,26 +45,5 @@ class Poll extends Model
             'id',
             'id'
         );
-    }
-
-    public function getUsersVote($userId = null)
-    {        
-        $cookieData = json_decode(request()->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
-        $cookieData = array_merge(Poll::POLL_COOKIE_STRUCTURE, $cookieData);
-
-        $cookieVotes = $cookieData['poll_votes'] ?? [];
-        $voterIdentity = $cookieData['voter_identity'] ?? null;
-
-        return $this->pollVotes()
-            ->with('pollOption')
-            ->where(function($query) use ($userId, $voterIdentity) {
-                $query->where('voter_identity', $voterIdentity);
-
-                if ($userId) {
-                    $query->orWhere('user_id', $userId);
-                }
-            })
-            ->whereIn('poll_option_id', array_values($cookieVotes))
-            ->first();
     }
 }

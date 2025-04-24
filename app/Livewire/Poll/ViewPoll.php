@@ -8,12 +8,20 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Http;
 use Livewire\Attributes\Computed;
+use App\Services\PollService;
 
 class ViewPoll extends Component
 {
     public $poll;
 
     public $selectedOption;
+
+    protected PollService $pollService;
+
+    public function boot(PollService $pollService)
+    {
+        $this->pollService = $pollService;
+    }
 
     public function getListeners()
     {
@@ -24,9 +32,9 @@ class ViewPoll extends Component
 
     public function mount()
     {
-        $this->poll = Poll::with(['pollOptions.votes', 'pollVotes'])->where('uuid', $this->poll)->first();
+        $this->poll = $this->pollService->getPollByUuid($this->poll);
 
-        if(!$this->poll) {
+        if (!$this->poll) {
             abort(404);
         }
 
@@ -36,50 +44,39 @@ class ViewPoll extends Component
     #[Computed]
     public function getUsersVote()
     {
-        $userId = Auth::id();
-        return $this->poll->getUsersVote($userId);
+        return $this->pollService->getUsersVote($this->poll, Auth::id());
     }
 
     public function vote()
     {
-        $this->validate([
-            'selectedOption' => 'required|exists:poll_options,id',
-        ]);
+        $this->validate();
 
-        $http = Http::acceptJson();
-
-        if (Auth::check()) {
-            $user = Auth::user();
-
-            $token = $user->tokens()->first()?->plainTextToken ?? $user->createToken('poll-token')->plainTextToken;
-
-            $http = $http->withToken($token);
-        }
-
-        $pollVotesCookie = Cookie::get(Poll::POLL_COOKIE_KEY, '{}');
-
-        $url = url("/api/polls/{$this->poll->id}/vote");
-        $cookies = [Poll::POLL_COOKIE_KEY => $pollVotesCookie];
-        $domain = parse_url(config('app.url'), PHP_URL_HOST);
-        $apiData = [
-            'poll_option_id' => $this->selectedOption,
-            'ip_address' => request()->ip(),
-        ];
-
-        $response = $http->withCookies($cookies, $domain)->post($url, $apiData);
-            
-        if ($response->successful()) {
-            $cookieJar = $response->cookies();
-            
-            $cookie = collect($cookieJar->toArray())->firstWhere('Name', Poll::POLL_COOKIE_KEY);
-
-            if ($cookie && isset($cookie['Value'])) {
-                $cookieValue = urldecode($cookie['Value']);
+        try {
+            $cookieValue = $this->pollService->makeVoteApiCall($this->poll, $this->selectedOption);
+    
+            if ($cookieValue) {
                 Cookie::queue(Poll::POLL_COOKIE_KEY, $cookieValue, 60 * 24 * 30);
             }
-        } else {
-            $this->addError('selectedOption', $response->json('message', 'An error occurred while submitting your vote.'));
+    
+            $this->dispatch('$refresh');
+        } catch (\Exception $e) {
+            $this->addError('selectedOption', $e->getMessage());
         }
+    }
+
+    public function rules()
+    {
+        return [
+            'selectedOption' => 'required|exists:poll_options,id',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'selectedOption.required' => 'Please select an option to vote.',
+            'selectedOption.exists' => 'The selected option is invalid.',
+        ];
     }
 
     public function render()

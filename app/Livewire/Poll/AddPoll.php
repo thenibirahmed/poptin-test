@@ -3,34 +3,41 @@
 namespace App\Livewire\Poll;
 
 use App\Models\Poll;
-use App\Models\PollOption;
 use Livewire\Component;
+use App\Services\PollService;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class AddPoll extends Component
 {
     public $poll;
+    
+    public $pollOptions = ['Option 1'];
 
-    public $pollOptions = [
-        'Option 1',
-    ];
+    protected PollService $pollService;
 
-    public function addPollOption()
+    public function boot(PollService $pollService)
     {
-        $this->pollOptions[] = '';
+        $this->pollService = $pollService;
     }
 
     public function mount()
     {
-        if($this->poll) {
-            $this->poll = Poll::find($this->poll);
+        if ($this->poll) {
+            $poll = Poll::find($this->poll);
 
-            $this->authorize('update', $this->poll);
+            $this->authorize('update', $poll);
 
-            $this->pollOptions = $this->poll->pollOptions->pluck('option')->toArray();
-            $this->poll = $this->poll->only(['id', 'name', 'question']);
+            $this->pollOptions = $poll->pollOptions->pluck('option')->toArray();
+            $this->poll = $poll->only(['id', 'name', 'question']);
         } else {
             $this->poll = Poll::CREATE_SKELETON;
         }
+    }
+
+    public function addPollOption()
+    {
+        $this->pollOptions[] = '';
     }
 
     public function removePollOption($index)
@@ -41,65 +48,17 @@ class AddPoll extends Component
 
     public function savePoll()
     {
-        $validatedPoll = $this->validate();
+        $validated = $this->validate();
 
-        if($this->isEditing()){
+        if ($this->isEditing()) {
             $poll = Poll::find($this->poll['id']);
-            $poll->update($validatedPoll['poll']);
-
-            $existingOptions = $poll->pollOptions->pluck('option', 'id')->toArray();
-            $newOptions = $this->pollOptions;
-
-            $toInsert = [];
-            $toKeep = [];
-            $timeStamp = now();
-
-            foreach ($newOptions as $option) {
-                $matchedId = array_search($option, $existingOptions);
-
-                if ($matchedId !== false) {
-                    $toKeep[] = $matchedId;
-                } else {
-                    $toInsert[] = [
-                        'poll_id' => $poll->id,
-                        'option' => $option,
-                        'created_at' => $timeStamp,
-                        'updated_at' => $timeStamp,
-                    ];
-                }
-            }
-
-            $poll->pollOptions()
-                ->whereNotIn('id', $toKeep)
-                ->delete();
-
-            if (!empty($toInsert)) {
-                PollOption::insert($toInsert);
-            }
-
+            $this->pollService->updatePoll($poll, $validated['poll'], $this->pollOptions);
             $sessionMessage = 'Poll updated successfully.';
-        }else{
-            $validatedPoll['poll']['user_id'] = auth()->id();
-            $validatedPoll['poll']['uuid'] = (string) Str::uuid();
-            $poll = Poll::create($validatedPoll['poll']);
-    
-            $pollOptionToInsert = [];
-    
-            $timeStamp = now();
-    
-            foreach ($this->pollOptions as $option) {
-                $pollOptionToInsert[] = [
-                    'poll_id' => $poll->id,
-                    'option' => $option,
-                    'created_at' => $timeStamp,
-                    'updated_at' => $timeStamp,
-                ];
-            }
-    
-            if(!empty($pollOptionToInsert)) {
-                PollOption::insert($pollOptionToInsert);
-            }
+        } else {
+            $validated['poll']['user_id'] = Auth::id();
+            $validated['poll']['uuid'] = (string) Str::uuid();
 
+            $this->pollService->createPoll($validated['poll'], $this->pollOptions);
             $sessionMessage = 'Poll created successfully.';
         }
 
