@@ -16,11 +16,20 @@ class PollList extends Component
 
         Poll::where('id', $pollId)->delete();
     }
+
+    public function getPolls()
+    {
+        if(auth()->user()->hasRole(['admin'])) {
+            return Poll::withCount('pollVotes')->paginate(10);
+        }
+
+        return Poll::where('user_id', auth()->id())->withCount('pollVotes')->paginate(10);
+    }
     
     public function render()
     {
         return view('livewire.poll.poll-list', [
-            'polls' => Poll::where('user_id', auth()->id())->withCount('pollVotes')->paginate(10),
+            'polls' => $this->getPolls(),
         ]);
     }
 }

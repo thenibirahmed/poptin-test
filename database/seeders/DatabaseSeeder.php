@@ -6,6 +6,7 @@ use App\Models\Poll;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,11 +16,15 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-
-        User::factory()->create([
+        $adminRole = Role::create(['name' => 'admin']);
+        $userRole = Role::create(['name' => 'user']);
+        
+        $adminUser = User::factory()->create([
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'email' => 'admin@admin.com',
         ]);
+
+        $adminUser->assignRole($adminRole);
         
         $userOne = User::factory()->create([
             'name' => 'Gal',
@@ -30,6 +35,9 @@ class DatabaseSeeder extends Seeder
             'name' => 'Tomer',
             'email' => 'tomer@tomer.com',
         ]);
+
+        $userOne->assignRole($userRole);
+        $userTwo->assignRole($userRole);
 
         Poll::factory(15)
             ->hasPollOptions(3)

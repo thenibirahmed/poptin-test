@@ -8,12 +8,21 @@ use Illuminate\Auth\Access\Response;
 
 class PollPolicy
 {
+    public function before(User $user, string $ability): bool|null
+    {
+        if($user->hasRole(['admin'])) {
+            return true;
+        }
+
+        return null;
+    }
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -29,7 +38,7 @@ class PollPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
