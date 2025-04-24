@@ -42,11 +42,6 @@ class ViewPoll extends Component
 
     public function vote()
     {
-        if($this->getUsersVote) {
-            $this->addError('selectedOption', 'You have already voted.');
-            return;
-        }
-
         $this->validate([
             'selectedOption' => 'required|exists:poll_options,id',
         ]);
@@ -61,7 +56,12 @@ class ViewPoll extends Component
             $http = $http->withToken($token);
         }
 
-        $response = $http->post(url("/api/polls/{$this->poll->id}/vote"), [
+        $pollVotesCookie = Cookie::get(Poll::POLL_COOKIE_KEY, '{}');
+
+        $response = $http->withCookies([
+            Poll::POLL_COOKIE_KEY => $pollVotesCookie,
+        ], parse_url(config('app.url'), PHP_URL_HOST))
+        ->post(url("/api/polls/{$this->poll->id}/vote"), [
             'poll_option_id' => $this->selectedOption,
             'ip_address' => request()->ip(),
         ]);

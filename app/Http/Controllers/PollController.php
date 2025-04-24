@@ -19,8 +19,24 @@ class PollController extends Controller
         $cookieVotes = json_decode($request->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
 
         if (isset($cookieVotes[$poll->id])) {
+
+            $castedVote = $poll->pollVotes()
+                ->where('user_id', $userId)
+                ->where('poll_option_id', $cookieVotes[$poll->id])
+                ->first();
+
+            if ($castedVote) {
+                $castedVote->update([
+                    'poll_option_id' => $request->poll_option_id,
+                ]);
+            }
+
+            $cookieVotes[$poll->id] = $request->poll_option_id;
+
             VoteCasted::dispatch($poll);
-            return response()->json(['message' => 'You have already voted.'], 403);
+
+            return response()->json(['message' => 'You have already voted.'])
+                ->cookie(Poll::POLL_COOKIE_KEY, json_encode($cookieVotes), 60 * 24 * 30);
         }
 
         PollVote::create([
@@ -31,6 +47,7 @@ class PollController extends Controller
         $cookieVotes[$poll->id] = $request->poll_option_id;
 
         VoteCasted::dispatch($poll);
+
         return response()->json(['message' => 'Vote submitted successfully.'])
             ->cookie(Poll::POLL_COOKIE_KEY, json_encode($cookieVotes), 60 * 24 * 30);
     }
