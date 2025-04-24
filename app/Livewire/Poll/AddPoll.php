@@ -80,6 +80,7 @@ class AddPoll extends Component
             $sessionMessage = 'Poll updated successfully.';
         }else{
             $validatedPoll['poll']['user_id'] = auth()->id();
+            $validatedPoll['poll']['uuid'] = (string) Str::uuid();
             $poll = Poll::create($validatedPoll['poll']);
     
             $pollOptionToInsert = [];

@@ -24,7 +24,7 @@ class ViewPoll extends Component
 
     public function mount()
     {
-        $this->poll = Poll::with(['pollOptions.votes', 'pollVotes'])->find($this->poll);
+        $this->poll = Poll::with(['pollOptions.votes', 'pollVotes'])->where('uuid', $this->poll)->first();
 
         if(!$this->poll) {
             abort(404);

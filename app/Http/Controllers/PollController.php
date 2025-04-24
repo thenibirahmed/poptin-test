@@ -5,17 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Poll;
 use App\Models\PollVote;
 use App\Events\VoteCasted;
+use App\Http\Requests\PollVoteRequest;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class PollController extends Controller
 {
-    public function submitVote(Request $request, Poll $poll)
+    public function submitVote(PollVoteRequest $request, Poll $poll)
     {
-        $request->validate([
-            'poll_option_id' => 'required|exists:poll_options,id',
-        ]);
-
         $userId = auth('sanctum')->id();
         $ip = $request->input('ip_address');
 
@@ -27,7 +24,7 @@ class PollController extends Controller
         $cookieData['voter_identity'] = $voterIdentity;
 
         $pollId = $poll->id;
-        $optionId = $request->poll_option_id;
+        $optionId = $request->input('poll_option_id');
 
         $existingVote = PollVote::query()
             ->where(function($query) use ($userId, $voterIdentity) {

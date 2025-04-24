@@ -19,6 +19,7 @@ class PollFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'uuid' => $this->faker->uuid(),
             'name' => $this->faker->sentence(3),
             'question' => $this->faker->sentence(10),
         ];

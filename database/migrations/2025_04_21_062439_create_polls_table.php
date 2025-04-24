@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('uuid')->unique();
             $table->string('name');
             $table->string('question');
 

@@ -18,7 +18,7 @@
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-white-500">{{ $poll->poll_votes_count }}</td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
                         x-data="{
-                            text: '{{ route('poll.view', ['poll' => $poll->id]) }}',
+                            text: '{{ route('poll.view', ['poll' => $poll->uuid]) }}',
                             copied: false,
                             copy() {
                                 const el = document.createElement('textarea');
@@ -37,7 +37,7 @@
                         <flux:button x-text="copied ? 'Copied ✅' : 'Copy Link'" @click.prevent="copy" href="#" size="xs" variant="primary">Copy Link</flux:button>
                         <flux:button href="{{ route('poll.edit', ['poll' => $poll->id]) }}" wire:navigate size="xs" variant="primary">Edit</flux:button>
                         <flux:button href="{{ route('poll.view-analytics', ['poll' => $poll->id]) }}" wire:navigate size="xs" variant="primary">Analytics</flux:button>
-                        <flux:button href="{{ route('poll.view', ['poll' => $poll->id]) }}" size="xs" variant="primary">View</flux:button>
+                        <flux:button href="{{ route('poll.view', ['poll' => $poll->uuid]) }}" size="xs" variant="primary">View</flux:button>
                         <flux:button wire:click.prevent='deletePoll({{ $poll->id }})' wire:confirm='Are you sure you want to delete this poll?' href="#" size="xs" variant="danger">Delete</flux:button>
                     </td>
                 </tr>
