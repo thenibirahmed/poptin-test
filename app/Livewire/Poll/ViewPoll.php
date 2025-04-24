@@ -30,10 +30,10 @@ class ViewPoll extends Component
             abort(404);
         }
 
-        $this->selectedOption = $this->getUsersVote?->id;
+        $this->selectedOption = $this->getUsersVote?->pollOption->id;
     }
 
-    #[Computed(persist: true)]
+    #[Computed]
     public function getUsersVote()
     {
         $userId = Auth::id();
@@ -58,14 +58,16 @@ class ViewPoll extends Component
 
         $pollVotesCookie = Cookie::get(Poll::POLL_COOKIE_KEY, '{}');
 
-        $response = $http->withCookies([
-            Poll::POLL_COOKIE_KEY => $pollVotesCookie,
-        ], parse_url(config('app.url'), PHP_URL_HOST))
-        ->post(url("/api/polls/{$this->poll->id}/vote"), [
+        $url = url("/api/polls/{$this->poll->id}/vote");
+        $cookies = [Poll::POLL_COOKIE_KEY => $pollVotesCookie];
+        $domain = parse_url(config('app.url'), PHP_URL_HOST);
+        $apiData = [
             'poll_option_id' => $this->selectedOption,
             'ip_address' => request()->ip(),
-        ]);
-        
+        ];
+
+        $response = $http->withCookies($cookies, $domain)->post($url, $apiData);
+            
         if ($response->successful()) {
             $cookieJar = $response->cookies();
             

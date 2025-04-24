@@ -11,7 +11,7 @@ class PollVote extends Model
     protected $fillable = [
         'poll_option_id',
         'user_id',
-        'ip_address',
+        'voter_identity',
     ];
 
     public function pollOption()

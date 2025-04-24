@@ -23,6 +23,11 @@ class Poll extends Model
 
     public const POLL_COOKIE_KEY = 'poll_votes';
 
+    public const POLL_COOKIE_STRUCTURE = [
+        'voter_identity' => '',
+        'poll_votes' => [],
+    ];
+
     public function pollOptions()
     {
         return $this->hasMany(PollOption::class);
@@ -41,18 +46,23 @@ class Poll extends Model
     }
 
     public function getUsersVote($userId = null)
-    {
-        $cookieVotes = json_decode(request()->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
-        
-        if (isset($cookieVotes[$this->id])) {
-            return $this->pollOptions()->find($cookieVotes[$this->id]);
-        }
+    {        
+        $cookieData = json_decode(request()->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
+        $cookieData = array_merge(Poll::POLL_COOKIE_STRUCTURE, $cookieData);
 
-        if ($userId) {
-            $vote = $this->pollVotes()->with('pollOption')->where('user_id', $userId)->first();
-            return $vote?->pollOption;
-        }
+        $cookieVotes = $cookieData['poll_votes'] ?? [];
+        $voterIdentity = $cookieData['voter_identity'] ?? null;
 
-        return null;
+        return $this->pollVotes()
+            ->with('pollOption')
+            ->where(function($query) use ($userId, $voterIdentity) {
+                $query->where('voter_identity', $voterIdentity);
+
+                if ($userId) {
+                    $query->orWhere('user_id', $userId);
+                }
+            })
+            ->whereIn('poll_option_id', array_values($cookieVotes))
+            ->first();
     }
 }

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\VoteCasted;
 use App\Models\Poll;
 use App\Models\PollVote;
+use App\Events\VoteCasted;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class PollController extends Controller
@@ -16,39 +17,46 @@ class PollController extends Controller
         ]);
 
         $userId = auth('sanctum')->id();
-        $cookieVotes = json_decode($request->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
 
-        if (isset($cookieVotes[$poll->id])) {
+        $cookieData = json_decode($request->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
 
-            $castedVote = $poll->pollVotes()
-                ->where('user_id', $userId)
-                ->where('poll_option_id', $cookieVotes[$poll->id])
-                ->first();
+        $cookieData = array_merge(Poll::POLL_COOKIE_STRUCTURE, $cookieData);
 
-            if ($castedVote) {
-                $castedVote->update([
-                    'poll_option_id' => $request->poll_option_id,
-                ]);
-            }
+        $voterIdentity = isset($cookieData['voter_identity']) && !empty($cookieData['voter_identity']) ? $cookieData['voter_identity'] : (string) Str::uuid();
+        $cookieData['voter_identity'] = $voterIdentity;
 
-            $cookieVotes[$poll->id] = $request->poll_option_id;
+        $pollId = $poll->id;
+        $optionId = $request->poll_option_id;
 
-            VoteCasted::dispatch($poll);
+        $existingVote = PollVote::query()
+            ->where(function($query) use ($userId, $voterIdentity) {
+                $query->where('voter_identity', $voterIdentity);
 
-            return response()->json(['message' => 'You have already voted.'])
-                ->cookie(Poll::POLL_COOKIE_KEY, json_encode($cookieVotes), 60 * 24 * 30);
+                if($userId) {
+                    $query->orWhere('user_id', $userId);
+                }
+            })
+            ->whereHas('pollOption', fn ($query) => $query->where('poll_id', $pollId))
+            ->first();
+
+        if ($existingVote) {
+            $existingVote->update([
+                'poll_option_id' => $optionId,
+                'user_id' => $userId ?: $existingVote->user_id,
+            ]);
+        } else {
+            PollVote::create([
+                'poll_option_id' => $optionId,
+                'user_id' => $userId,
+                'voter_identity' => $voterIdentity,
+            ]);
         }
 
-        PollVote::create([
-            'poll_option_id' => $request->poll_option_id,
-            'user_id' => $userId,
-        ]);
-
-        $cookieVotes[$poll->id] = $request->poll_option_id;
+        $cookieData['poll_votes'][$pollId] = $optionId;
 
         VoteCasted::dispatch($poll);
 
         return response()->json(['message' => 'Vote submitted successfully.'])
-            ->cookie(Poll::POLL_COOKIE_KEY, json_encode($cookieVotes), 60 * 24 * 30);
+            ->cookie(Poll::POLL_COOKIE_KEY, json_encode($cookieData), 60 * 24 * 30);
     }
 }

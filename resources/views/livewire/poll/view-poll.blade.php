@@ -14,7 +14,7 @@
     <div class="mt-8">
         @if ($this->getUsersVote)
             <div class="text-sm text-gray-500">
-                You have voted for option: <span class="font-bold">{{ $this->getUsersVote?->option }}</span>
+                You have voted for option: <span class="font-bold">{{ $this->getUsersVote?->pollOption?->option }}</span>
             </div>
         @endif
         <flux:button wire:click.prevent="vote" size="sm" variant="primary" class="mt-4">
