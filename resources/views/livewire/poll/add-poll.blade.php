@@ -24,6 +24,8 @@
         </flux:button>
     </div>
     <div class="mt-5">
-        <flux:button type="submit">Add Poll</flux:button>
+        <flux:button type="submit">
+            {{ $this->isEditing() ? 'Update' : 'Add' }} Poll
+        </flux:button>
     </div>
 </form>

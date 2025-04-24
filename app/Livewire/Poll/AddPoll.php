@@ -40,31 +40,70 @@ class AddPoll extends Component
     {
         $validatedPoll = $this->validate();
 
-        $validatedPoll['poll']['user_id'] = auth()->id();
-        $poll = Poll::create($validatedPoll['poll']);
+        if($this->isEditing()){
+            $poll = Poll::find($this->poll['id']);
+            $poll->update($validatedPoll['poll']);
 
-        $pollOptionToInsert = [];
+            $existingOptions = $poll->pollOptions->pluck('option', 'id')->toArray();
+            $newOptions = $this->pollOptions;
 
-        $timeStamp = now();
+            $toInsert = [];
+            $toKeep = [];
+            $timeStamp = now();
 
-        foreach ($this->pollOptions as $option) {
-            $pollOptionToInsert[] = [
-                'poll_id' => $poll->id,
-                'option' => $option,
-                'created_at' => $timeStamp,
-                'updated_at' => $timeStamp,
-            ];
+            foreach ($newOptions as $option) {
+                $matchedId = array_search($option, $existingOptions);
+
+                if ($matchedId !== false) {
+                    $toKeep[] = $matchedId;
+                } else {
+                    $toInsert[] = [
+                        'poll_id' => $poll->id,
+                        'option' => $option,
+                        'created_at' => $timeStamp,
+                        'updated_at' => $timeStamp,
+                    ];
+                }
+            }
+
+            $poll->pollOptions()
+                ->whereNotIn('id', $toKeep)
+                ->delete();
+
+            if (!empty($toInsert)) {
+                PollOption::insert($toInsert);
+            }
+
+            $sessionMessage = 'Poll updated successfully.';
+        }else{
+            $validatedPoll['poll']['user_id'] = auth()->id();
+            $poll = Poll::create($validatedPoll['poll']);
+    
+            $pollOptionToInsert = [];
+    
+            $timeStamp = now();
+    
+            foreach ($this->pollOptions as $option) {
+                $pollOptionToInsert[] = [
+                    'poll_id' => $poll->id,
+                    'option' => $option,
+                    'created_at' => $timeStamp,
+                    'updated_at' => $timeStamp,
+                ];
+            }
+    
+            if(!empty($pollOptionToInsert)) {
+                PollOption::insert($pollOptionToInsert);
+            }
+
+            $sessionMessage = 'Poll created successfully.';
         }
 
-        if(!empty($pollOptionToInsert)) {
-            PollOption::insert($pollOptionToInsert);
-        }
-
-        session()->flash('poll-added', 'Poll created successfully.');
-        return redirect()->route('dashboard');
+        session()->flash('poll-added', $sessionMessage);
+        return $this->redirect(route('dashboard'), true);
     }
 
-    public function isEditinG()
+    public function isEditing()
     {
         return isset($this->poll['id']);
     }
