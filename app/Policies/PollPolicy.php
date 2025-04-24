@@ -21,7 +21,7 @@ class PollPolicy
      */
     public function view(User $user, Poll $poll): bool
     {
-        return false;
+        return $user->id === $poll->user_id;
     }
 
     /**
@@ -45,7 +45,7 @@ class PollPolicy
      */
     public function delete(User $user, Poll $poll): bool
     {
-        return false;
+        return $user->id === $poll->user_id;
     }
 
     /**

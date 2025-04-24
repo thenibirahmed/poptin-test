@@ -12,6 +12,8 @@ class PollList extends Component
 
     public function deletePoll($pollId)
     {
+        $this->authorize('delete', $this->poll);
+
         Poll::where('id', $pollId)->delete();
     }
     
