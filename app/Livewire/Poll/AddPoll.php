@@ -23,6 +23,9 @@ class AddPoll extends Component
     {
         if($this->poll) {
             $this->poll = Poll::find($this->poll);
+
+            $this->authorize('update', $this->poll);
+
             $this->pollOptions = $this->poll->pollOptions->pluck('option')->toArray();
             $this->poll = $this->poll->only(['id', 'name', 'question']);
         } else {
