@@ -17,6 +17,7 @@ class PollController extends Controller
         ]);
 
         $userId = auth('sanctum')->id();
+        $ip = $request->input('ip_address');
 
         $cookieData = json_decode($request->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
 
@@ -49,6 +50,7 @@ class PollController extends Controller
                 'poll_option_id' => $optionId,
                 'user_id' => $userId,
                 'voter_identity' => $voterIdentity,
+                'ip_address' => $ip,
             ]);
         }
 

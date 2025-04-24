@@ -12,6 +12,7 @@ class PollVote extends Model
         'poll_option_id',
         'user_id',
         'voter_identity',
+        'ip_address',
     ];
 
     public function pollOption()
