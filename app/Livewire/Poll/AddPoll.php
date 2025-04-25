@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 class AddPoll extends Component
 {
     public $poll;
-    
+
     public $pollOptions = ['Option 1'];
 
     protected PollService $pollService;
@@ -52,6 +52,7 @@ class AddPoll extends Component
 
         if ($this->isEditing()) {
             $poll = Poll::find($this->poll['id']);
+            $this->authorize('update', $poll);
             $this->pollService->updatePoll($poll, $validated['poll'], $this->pollOptions);
             $sessionMessage = 'Poll updated successfully.';
         } else {

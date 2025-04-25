@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use App\Models\PollOption;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,11 @@ class Poll extends Model
         'voter_identity' => '',
         'poll_votes' => [],
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function pollOptions()
     {

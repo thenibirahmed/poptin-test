@@ -9,4 +9,4 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::post('/polls/{poll}/vote', [PollController::class, 'submitVote']);
+Route::post('/polls/{poll}/vote', [PollController::class, 'submitVote'])->name('polls.vote');
