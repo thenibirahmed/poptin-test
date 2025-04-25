@@ -8,6 +8,8 @@ use App\Events\VoteCasted;
 use App\Models\PollOption;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cookie;
@@ -101,101 +103,133 @@ class PollService
 
     public function storeVote(Request $request, Poll $poll): array
     {
-        $userId = auth('sanctum')->id();
-        $ip = $request->input('ip_address');
+        try {
+            $userId = auth('sanctum')->id();
+            $ip = $request->input('ip_address');
 
-        $cookieData = json_decode($request->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
-        $cookieData = array_merge(Poll::POLL_COOKIE_STRUCTURE, $cookieData);
+            $cookieData = json_decode($request->cookie(Poll::POLL_COOKIE_KEY, '{}'), true);
+            $cookieData = array_merge(Poll::POLL_COOKIE_STRUCTURE, $cookieData);
 
-        $voterIdentity = $cookieData['voter_identity'] ?: (string) Str::uuid();
-        $cookieData['voter_identity'] = $voterIdentity;
+            $voterIdentity = $cookieData['voter_identity'] ?: (string) Str::uuid();
+            $cookieData['voter_identity'] = $voterIdentity;
 
-        $pollId = $poll->id;
-        $optionId = $request->poll_option_id;
+            $pollId = $poll->id;
+            $optionId = $request->poll_option_id;
 
-        $existingVote = PollVote::query()
-            ->where(function ($query) use ($userId, $voterIdentity) {
-                $query->where('voter_identity', $voterIdentity);
+            $existingVote = PollVote::query()
+                ->where(function ($query) use ($userId, $voterIdentity) {
+                    $query->where('voter_identity', $voterIdentity);
 
-                if ($userId) {
-                    $query->orWhere('user_id', $userId);
-                }
-            })
-            ->whereHas('pollOption', fn ($query) => $query->where('poll_id', $pollId))
-            ->first();
+                    if ($userId) {
+                        $query->orWhere('user_id', $userId);
+                    }
+                })
+                ->whereHas('pollOption', fn ($query) => $query->where('poll_id', $pollId))
+                ->first();
 
-        if ($existingVote) {
-            $existingVote->update([
-                'poll_option_id' => $optionId,
-                'user_id' => $userId ?: $existingVote->user_id,
-                'ip_address' => $ip,
+            if ($existingVote) {
+                $existingVote->update([
+                    'poll_option_id' => $optionId,
+                    'user_id' => $userId ?: $existingVote->user_id,
+                    'ip_address' => $ip,
+                ]);
+            } else {
+                PollVote::create([
+                    'poll_option_id' => $optionId,
+                    'user_id' => $userId,
+                    'voter_identity' => $voterIdentity,
+                    'ip_address' => $ip,
+                ]);
+            }
+
+            $cookieData['poll_votes'][$pollId] = $optionId;
+
+            VoteCasted::dispatch($poll);
+
+            return [
+                'message' => 'Vote submitted successfully.',
+                'cookie' => json_encode($cookieData),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Vote submission failed.', [
+                'error' => $e->getMessage(),
             ]);
-        } else {
-            PollVote::create([
-                'poll_option_id' => $optionId,
-                'user_id' => $userId,
-                'voter_identity' => $voterIdentity,
-                'ip_address' => $ip,
-            ]);
+
+            throw new \Exception('Unable to submit vote, internal error. Please try again later.', 500);
         }
-
-        $cookieData['poll_votes'][$pollId] = $optionId;
-
-        VoteCasted::dispatch($poll);
-
-        return [
-            'message' => 'Vote submitted successfully.',
-            'cookie' => json_encode($cookieData),
-        ];
     }
 
     public function createPoll(array $pollData, array $options): Poll
     {
         $pollData['uuid'] = (string) Str::uuid();
 
-        $poll = Poll::create($pollData);
+        try{
+            $poll = DB::transaction(function () use ($pollData, $options) {
+                $poll = Poll::create($pollData);
+        
+                $timeStamp = now();
+                $pollOptionToInsert = array_map(fn ($option) => [
+                    'poll_id' => $poll->id,
+                    'option' => $option,
+                    'created_at' => $timeStamp,
+                    'updated_at' => $timeStamp,
+                ], $options);
+        
+                PollOption::insert($pollOptionToInsert);
+    
+                return $poll;
+            });
+        }catch (\Exception $e) {
+            Log::error('Poll creation failed.', [
+                'error' => $e->getMessage(),
+            ]);
 
-        $timeStamp = now();
-        $pollOptionToInsert = array_map(fn ($option) => [
-            'poll_id' => $poll->id,
-            'option' => $option,
-            'created_at' => $timeStamp,
-            'updated_at' => $timeStamp,
-        ], $options);
-
-        PollOption::insert($pollOptionToInsert);
+            throw new \Exception('Failed to create poll');
+        }
 
         return $poll;
     }
 
     public function updatePoll(Poll $poll, array $pollData, array $newOptions): void
     {
-        $poll->update($pollData);
+        try{
 
-        $existingOptions = $poll->pollOptions->pluck('option', 'id')->toArray();
-        $toInsert = [];
-        $toKeep = [];
-        $timeStamp = now();
+            DB::transaction(function () use ($poll, $pollData, $newOptions) {
+                $poll->update($pollData);
+        
+                $existingOptions = $poll->pollOptions->pluck('option', 'id')->toArray();
+                $toInsert = [];
+                $toKeep = [];
+                $timeStamp = now();
+        
+                foreach ($newOptions as $option) {
+                    $matchedId = array_search($option, $existingOptions);
+        
+                    if ($matchedId !== false) {
+                        $toKeep[] = $matchedId;
+                    } else {
+                        $toInsert[] = [
+                            'poll_id' => $poll->id,
+                            'option' => $option,
+                            'created_at' => $timeStamp,
+                            'updated_at' => $timeStamp,
+                        ];
+                    }
+                }
+        
+                $poll->pollOptions()->whereNotIn('id', $toKeep)->delete();
+        
+                if (!empty($toInsert)) {
+                    PollOption::insert($toInsert);
+                }
+            });
+        } catch (\Exception $e) {
 
-        foreach ($newOptions as $option) {
-            $matchedId = array_search($option, $existingOptions);
+            Log::error('Poll update failed.', [
+                'error' => $e->getMessage(),
+            ]);
 
-            if ($matchedId !== false) {
-                $toKeep[] = $matchedId;
-            } else {
-                $toInsert[] = [
-                    'poll_id' => $poll->id,
-                    'option' => $option,
-                    'created_at' => $timeStamp,
-                    'updated_at' => $timeStamp,
-                ];
-            }
-        }
-
-        $poll->pollOptions()->whereNotIn('id', $toKeep)->delete();
-
-        if (!empty($toInsert)) {
-            PollOption::insert($toInsert);
+            throw new \Exception('Failed to update poll');
         }
     }
 
