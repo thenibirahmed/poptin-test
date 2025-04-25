@@ -11,6 +11,10 @@
 
 ## Login Credentials
 
+*Admin*
+- email: `admin@admin.com`
+- password: `password`
+
 *User One*
 - email: `gal@gal.com`
 - password: `password`
