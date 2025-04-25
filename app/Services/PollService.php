@@ -42,7 +42,6 @@ class PollService
                     $query->orWhere('user_id', $userId);
                 }
             })
-            ->whereIn('poll_option_id', array_values($cookieVotes))
             ->first();
     }
 
@@ -84,7 +83,7 @@ class PollService
         $pollVotesCookie = Cookie::get(Poll::POLL_COOKIE_KEY, '{}');
         $cookies = [Poll::POLL_COOKIE_KEY => $pollVotesCookie];
         $domain = parse_url(config('app.url'), PHP_URL_HOST);
-        
+
         $url = route('polls.vote', $poll);
 
         $response = $http->withCookies($cookies, $domain)->post($url, [

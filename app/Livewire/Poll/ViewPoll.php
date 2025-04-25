@@ -26,7 +26,7 @@ class ViewPoll extends Component
     public function getListeners()
     {
         return [
-            "echo:vote-casted.{$this->poll->id},VoteCasted" => '$refresh',
+            "echo:vote-casted.{$this->poll->id},VoteCasted" => 'handleVoteCasted',
         ];
     }
 
@@ -38,6 +38,11 @@ class ViewPoll extends Component
             abort(404);
         }
 
+        $this->selectedOption = $this->getUsersVote?->pollOption->id;
+    }
+
+    public function handleVoteCasted()
+    {
         $this->selectedOption = $this->getUsersVote?->pollOption->id;
     }
 
